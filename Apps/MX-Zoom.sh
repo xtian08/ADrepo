@@ -25,9 +25,9 @@ if [ -e "/Applications/zoom.us.app" ]; then
 fi
 
 check_running_ap() {
-ps -A | grep "zoom.us.app" | grep -v "grep" > /tmp/RunningApps.txt
+ps -A | grep -i "zoom.us.app" | grep -v "grep" > /tmp/RunningApps.txt
 
-if grep -q "Zoom.us.app" /tmp/RunningApps.txt; then
+if grep -qi "zoom.us.app" /tmp/RunningApps.txt; then
     echo "****** Application is currently running on target Mac. Exiting. ******"
     exit 0
 else
