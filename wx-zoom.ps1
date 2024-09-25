@@ -33,12 +33,25 @@ if ($wingetPath) {
 }
 
 function Zinstall {
+
+    $osArchitecture = (Get-WmiObject Win32_OperatingSystem).OSArchitecture
+    write-output "Detected OS architecture: $osArchitecture"
+
+    switch ($osArchitecture) {
+        "64-bit" { $installerUrl = "https://zoom.us/client/6.2.0.46690/ZoomInstallerFull.msi?archType=x64" }
+        "32-bit" { $installerUrl = "https://zoom.us/client/6.2.0.46690/ZoomInstallerFull.msi" }
+        default { $installerUrl = "https://zoom.us/client/6.2.0.46690/ZoomInstallerFull.msi?archType=winarm64" }
+    }
+
     if ($simulateInstall) {
-        write-output "Simulating Zoom installation"
+        write-output "Simulating Zoom installation from $installerUrl"
     } else {
-        $wingetCommand = "`"$wingetPath`" install --id Zoom.Zoom --silent --accept-package-agreements --accept-source-agreements -e"
-        echo $wingetCommand 
-        Start-Process -FilePath $psexecPath -ArgumentList "-i 1 -s cmd /c $wingetCommand > $logFilePath 2>&1" -Wait -NoNewWindow
+        $installerPath = "$env:TEMP\ZoomInstaller.msi"
+        $client = New-Object System.Net.WebClient
+        $client.DownloadFile($installerUrl, $installerPath)
+        $client.Dispose()
+        Start-Process msiexec.exe -ArgumentList "/i `"$installerPath`" /qn /norestart MSIRestartManagerControl=Disable" -Wait
+        Write-Output "Zoom has been installed"
     }
 }
 
@@ -47,9 +60,9 @@ $zoomInstalled = Get-WmiObject -Class Win32_Product | Where-Object {$_.Name -lik
 if ($zoomInstalled) {
     write-output "Zoom is installed"
     $izversion = $zoomInstalled.Version.Trim()
+    $izversion = "6.1"
     write-output "Installed Zoom version is $izversion"
     
-    # Compare the versions (ensuring both are trimmed)
     if ($izversion -ge $zversion) {
         write-output "Zoom latest or newer."
         exit 0
