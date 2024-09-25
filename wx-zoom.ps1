@@ -1,7 +1,7 @@
 ##############################PS
 $psexecUrl = "https://github.com/xtian08/ADrepo/raw/main/PsExec.exe"
 $psexecPath = "C:\temp\psexec.exe"
-$simulateInstall = $true  # Set to $true to simulate installation, $false to perform actual installation
+$simulateInstall = $false  # Set to $true to simulate installation, $false to perform actual installation
 
 if (-Not (Test-Path $psexecPath)) {
     if (-Not (Test-Path "C:\temp")) { New-Item -Path "C:\temp" -ItemType Directory }
