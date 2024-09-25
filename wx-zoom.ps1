@@ -20,7 +20,7 @@ if ($wingetPath) {
     $wingetCommand = "`"$wingetPath`" show zoom.zoom --accept-source-agreements --disable-interactivity"
     echo $wingetCommand
     
-    $process = Start-Process -FilePath $psexecPath -ArgumentList "/accepteula -i 1 -s cmd /c $wingetCommand > $logFilePath 2>&1" -PassThru -Wait -NoNewWindow 
+    Start-Process -FilePath $psexecPath -ArgumentList "/accepteula -i 1 -s cmd /c $wingetCommand > $logFilePath 2>&1" -PassThru -Wait -NoNewWindow 
 
     # Read the log file and extract the Version value
     $zversion = Select-String -Path $logFilePath -Pattern 'Version:\s*(\S+)' | ForEach-Object {
