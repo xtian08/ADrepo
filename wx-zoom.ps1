@@ -60,7 +60,7 @@ $zoomInstalled = Get-WmiObject -Class Win32_Product | Where-Object {$_.Name -lik
 if ($zoomInstalled) {
     write-output "Zoom is installed"
     $izversion = $zoomInstalled.Version.Trim()
-    $izversion = "6.1"
+    #$izversion = "6.1"
     write-output "Installed Zoom version is $izversion"
     
     if ($izversion -ge $zversion) {
