@@ -1,35 +1,23 @@
 ##############################PS
-$psexecUrl = "https://github.com/xtian08/ADrepo/raw/main/PsExec.exe"
-$psexecPath = "C:\temp\psexec.exe"
 $simulateInstall = $false  # Set to $true to simulate installation, $false to perform actual installation
+$taskName = "SilentWingetTask"
+$logFilePath = "C:\temp\zoomV.log"
+$wingetPath = Get-ChildItem -Path "C:\Program Files\" -Filter winget.exe -Recurse -ErrorAction SilentlyContinue -Force | Select-Object -First 1 -ExpandProperty FullName
+$wingetCommand = "`"$wingetPath`" show zoom.zoom --accept-source-agreements --disable-interactivity"
+$command = "/c $wingetCommand > $logFilePath 2>&1"
 
-if (-Not (Test-Path $psexecPath)) {
-    if (-Not (Test-Path "C:\temp")) { New-Item -Path "C:\temp" -ItemType Directory }
-    Invoke-WebRequest -Uri $psexecUrl -OutFile $psexecPath
-}
+# Create task action to execute the command and log output
+$action = New-ScheduledTaskAction -Execute "cmd.exe" -Argument $command
+$principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -RunLevel Highest
+$task = New-ScheduledTask -Action $action -Principal $principal
 
-$windowsAppsPath = "$env:ProgramFiles\WindowsApps"
-$wingetPath = Get-ChildItem -Path $windowsAppsPath -Filter winget.exe -Recurse -ErrorAction SilentlyContinue -Force | Select-Object -First 1 -ExpandProperty FullName
-##############################PS
+# Register and run the task
+Register-ScheduledTask -TaskName $taskName -InputObject $task
+Start-ScheduledTask -TaskName $taskName
 
-if ($wingetPath) {
-    Write-Output "winget.exe found at: $wingetPath"
-    $logFilePath = "c:\temp\zoom.log"
-    #New-Item c:\temp\zoom.log -type file
-
-    # Winget args
-    $wingetCommand = "`"$wingetPath`" show zoom.zoom --accept-source-agreements --disable-interactivity"
-    $process = Start-Process -FilePath $psexecPath -ArgumentList "/accepteula -i 1 -s powershell -Command `$wingetCommand | Out-File -FilePath $logFilePath -Encoding utf8" -PassThru -Wait -NoNewWindow
-
-    # Read the log file and extract the Version value
-    $zversion = Select-String -Path $logFilePath -Pattern 'Version:\s*(\S+)' | ForEach-Object {
-        if ($_.Matches.Count -gt 0) { return $_.Matches[0].Groups[1].Value }
-    }
-    
-} else {
-    Write-Output "winget.exe not found on the system."
-    return 1
-}
+# Wait for task completion and delete the task
+Start-Sleep -Seconds 10
+Unregister-ScheduledTask -TaskName $taskName -Confirm:$false
 
 function Zinstall {
 
