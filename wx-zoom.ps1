@@ -15,10 +15,11 @@ $wingetPath = Get-ChildItem -Path $windowsAppsPath -Filter winget.exe -Recurse -
 if ($wingetPath) {
     Write-Output "winget.exe found at: $wingetPath"
     $logFilePath = "c:\temp\zoom.log"
+    New-Item c:\temp.zoom.log -type file
 
     # Winget args
     $wingetCommand = "`"$wingetPath`" show zoom.zoom --accept-source-agreements --disable-interactivity"
-    echo $wingetCommand
+    #echo $wingetCommand
     
     Start-Process -FilePath $psexecPath -ArgumentList "/accepteula -i 1 -s cmd /c $wingetCommand > $logFilePath 2>&1" -PassThru -Wait -NoNewWindow 
 
