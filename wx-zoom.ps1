@@ -61,3 +61,6 @@ if ($zoomInstalled) {
     write-output "Zoom not found. Installing..."
     Zinstall
 }
+
+
+Start-Sleep -Seconds 30
