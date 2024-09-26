@@ -19,6 +19,11 @@ Start-ScheduledTask -TaskName $taskName
 Start-Sleep -Seconds 10
 Unregister-ScheduledTask -TaskName $taskName -Confirm:$false
 
+# Read the log file and extract the Version value
+$zversion = Select-String -Path $logFilePath -Pattern 'Version:\s*(\S+)' | ForEach-Object {
+    if ($_.Matches.Count -gt 0) { return $_.Matches[0].Groups[1].Value }
+}
+
 function Zinstall {
 
     $osArchitecture = (Get-WmiObject Win32_OperatingSystem).OSArchitecture
@@ -39,6 +44,7 @@ function Zinstall {
         $client.Dispose()
         Start-Process msiexec.exe -ArgumentList "/i `"$installerPath`" /qn /norestart MSIRestartManagerControl=Disable" -Wait
         Write-Output "Zoom has been installed"
+        Start-Sleep -Seconds 30
     }
 }
 
@@ -52,6 +58,7 @@ if ($zoomInstalled) {
     
     if ($izversion -ge $zversion) {
         write-output "Zoom latest or newer."
+        Start-Sleep -Seconds 30
         exit 0
     } else {
         write-output "Zoom is outdated."
@@ -61,6 +68,3 @@ if ($zoomInstalled) {
     write-output "Zoom not found. Installing..."
     Zinstall
 }
-
-
-Start-Sleep -Seconds 30
