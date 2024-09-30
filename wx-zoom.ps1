@@ -44,7 +44,7 @@ function Zinstall {
         $client.Dispose()
         Start-Process msiexec.exe -ArgumentList "/i `"$installerPath`" /qn /norestart MSIRestartManagerControl=Disable" -Wait
         Write-Output "Zoom has been installed"
-        Start-Sleep -Seconds 30
+        Start-Sleep -Seconds 5
     }
 }
 
@@ -58,7 +58,7 @@ if ($zoomInstalled) {
     
     if ($izversion -ge $zversion) {
         write-output "Zoom latest or newer."
-        Start-Sleep -Seconds 30
+        Start-Sleep -Seconds 5
         exit 0
     } else {
         write-output "Zoom is outdated."
