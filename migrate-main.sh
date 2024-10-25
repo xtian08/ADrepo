@@ -1,65 +1,54 @@
 #!/bin/bash
 
-##########################################################################################
-##
-##Copyright (c) 2017 Jamf.  All rights reserved.
-##
-##      Redistribution and use in source and binary forms, with or without
-##      modification, are permitted provided that the following conditions are met:
-##              * Redistributions of source code must retain the above copyright
-##                notice, this list of conditions and the following disclaimer.
-##              * Redistributions in binary form must reproduce the above copyright
-##                notice, this list of conditions and the following disclaimer in the
-##                documentation and#or other materials provided with the distribution.
-##              * Neither the name of the Jamf nor the names of its contributors may be
-##                used to endorse or promote products derived from this software without
-##                specific prior written permission.
-##
-##      THIS SOFTWARE IS PROVIDED BY JAMF SOFTWARE, LLC "AS IS" AND ANY
-##      EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-##      WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-##      DISCLAIMED. IN NO EVENT SHALL JAMF SOFTWARE, LLC BE LIABLE FOR ANY
-##      DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-##      (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-##      LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-##      ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-##      (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-##      SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-##
-##########################################################################################
-#
-# SUPPORT FOR THIS PROGRAM
-#
-#       This program is distributed "as is" by JAMF Software, Professional Services Team. For more
-#       information or support for this script, please contact your JAMF Software Account Manager.
-#
-#####################################################################################################
-#
-# ABOUT THIS PROGRAM
-#
-# NAME - apiMDM_remove.sh
-#
-# DESCRIPTION - Script is used to remove MDM from macOS clients 10.13 (High Sierra) and later.
-#               Parameters passed to the script include a Jamf server username and password and
-#               optionally the Jamf server URL in the form: https://FQDN:port/.
-#
-#               The jamf user aaccount must have at least computer create and read (JSS Objects)
-#               along with Send Computer Unmanage Command (JSS Actions).
-#
-####################################################################################################
-#
-# HISTORY
-#
-#    Version: 1.4
-#
-#   - Created by Leslie Helou, Professional Services Engineer, JAMF Software on December 12, 2017
-#   - updated 20190124: Provide additional feedback as it runs
-#   - updated 20200918: Updates due to changes in xpath for Big Sur
-#   - updated 20240726: Update to use token for authentication
-#
-####################################################################################################
+# Define attributes
+outshow=$(sudo -S profiles show -type enrollment | grep -q "ds1688" && echo "WS1 link found" || echo "Not on WS1")
+outstatus=$(sudo -S profiles status -type enrollment)
+jamfsrv="https://nyuad.jamfcloud.com/mdm/ServerURL"
+ws1srv="https://ds1688.awmdm.com/DeviceServices/AppleMDM/Processor.aspx"
 
-## check run settings for arguments
+# Show output
+echo "Pshow: $outshow"
+echo "Pstatus: $outstatus"
+
+# Capture output
+enroll_1=$(echo "$outstatus" | awk '/Enrolled via DEP:/ {print $4}')
+enroll_2=$(echo "$outstatus" | awk '/MDM enrollment:/ {print $3}')
+enroll_3=$(echo "$outstatus" | awk '/MDM server:/ {print $3}')
+
+# Check conditions
+if [[ $enroll_3 == *"jamfcloud"* ]]; then
+    echo "Asset is on Jamf"
+    echo "Condition met: proceeding to migrate"
+elif [[ $outshow == *"ds1688"* ]] && [[ $enroll_1 == "Yes" && $enroll_2 == "Yes" && $enroll_3 == "$ws1srv" ]]; then
+    echo "Already WS1 DEP enrolled"
+    exit 0
+elif [[ $outshow == *"ds1688"* ]] && [[ $enroll_1 == "No" && $enroll_2 == "No" ]]; then
+    echo "Asset is not enrolled but is on WS1 DEP"
+    echo "Condition met: proceeding to migrate"
+elif [[ $enroll_2 == "Yes" && $enroll_3 == "$ws1srv" ]]; then
+    echo "Found enrolled on WS1 manually"
+    exit 0
+elif [[ $enroll_2 == "No" ]]; then
+    echo "Asset is not enrolled"
+    echo "Condition met: proceeding to migrate"
+fi
+
+# Migrate to Jamf - MAIN Code - Do not modify
+
+#Download and Install Base64 pkg
+
+downb64() {
+echo "Downloading Base64 pkg"
+curl -L -o /tmp/package.pkg "https://github.com/NYUAD-IT/NYU-umad/raw/main/umad-2.0-Signed.pkg" && \
+sudo installer -pkg /tmp/package.pkg -target / && rm /tmp/package.pkg
+}
+
+# if /Users/Shared/umad.pkg not exit then download pkg
+if [ ! -f /Users/Shared/umad.pkg ]; then
+    downb64
+    else
+    echo "Base64 pkg already exists"
+fi
 
 ## get macOS version
 macOS_Version=$(sw_vers -productVersion)
@@ -156,3 +145,4 @@ else
     echo "An unknown error occurred invalidating the token"
 fi
 
+exit 0
