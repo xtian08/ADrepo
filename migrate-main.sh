@@ -146,6 +146,7 @@ else
 fi
 
 #Reload UMAD LaunchAgent
+sleep 15
 sudo launchctl bootout gui/$(id -u) /Library/LaunchAgents/com.erikng.umad.plist
 sudo launchctl bootstrap gui/$(id -u) /Library/LaunchAgents/com.erikng.umad.plist
 
