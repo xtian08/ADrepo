@@ -145,4 +145,11 @@ else
     echo "An unknown error occurred invalidating the token"
 fi
 
+#Reload UMAD LaunchAgent
+sudo launchctl bootout gui/$(id -u) /Library/LaunchAgents/com.erikng.umad.plist
+sudo launchctl bootstrap gui/$(id -u) /Library/LaunchAgents/com.erikng.umad.plist
+
+#Open Profiles Syspref
+#open /System/Library/PreferencePanes/Profiles.prefPane
+
 exit 0
