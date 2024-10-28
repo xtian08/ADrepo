@@ -53,7 +53,11 @@ else
     echo "Base64 pkg already exists"
 fi
 
-sudo installer -pkg $u_file -target / #&& rm $u_file
+if [ -d "/Library/umad" ]; then
+    echo "Enrollment already in progress"
+else
+    sudo installer -pkg $u_file -target / #&& rm $u_file
+fi
 
 #Update LaunchAgent
 sudo curl -L -o $p_file $p_file_url
@@ -74,12 +78,10 @@ pwd="!Welcome20"
 
 if [ "$uname" == "" ];then
     echo "missing client ID - exiting."
-    exit 1
 fi
 
 if [ "$pwd" == "" ];then
     echo "missing client secret - exiting."
-    exit 1
 fi
 
 if [ "https://nyuad.jamfcloud.com/" != "" ];then
@@ -93,7 +95,6 @@ fi
 
 if [ "$server" == "" ];then
     echo "unable to determine current Jamf Pro server - exiting."
-    exit 1
 fi
 
 ## ensure the server URL ends with a /
@@ -107,7 +108,6 @@ fi
 udid=$(/usr/sbin/system_profiler SPHardwareDataType | awk '/UUID/ { print $3; }')
 if [ "$udid" == "" ];then
     echo "unable to determine UUID of computer - exiting."
-    exit 1
 else
     echo "computer UUID: $udid"
 fi
@@ -137,7 +137,6 @@ if [[ $(echo "${compXml}" | grep "The server has not found anything matching the
     echo "computer ID: $compId"
 else
     echo "computer was not found on $server - exiting."
-    exit 1
 fi
 
 ## send unmanage command to machine
@@ -181,4 +180,3 @@ echo "$serialNumber,$loggedInUser" >> /Users/Shared/owner.csv
 # Print a success message
 echo "Owner information captured and saved to /Users/Shared/owner.csv"
 
-exit 0
