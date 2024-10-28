@@ -36,19 +36,32 @@ fi
 # Migrate to Jamf - MAIN Code - Do not modify
 
 #Download and Install Base64 pkg
+u_file="/Users/Shared/package.pkg"
+p_file="/Library/LaunchAgents/com.erikng.umad.plist"
+p_file_url="https://github.com/NYUAD-IT/NYU-umad/raw/main/payload/Library/LaunchAgents/com.erikng.umad.plist"
 
 downb64() {
 echo "Downloading Base64 pkg"
-curl -L -o /tmp/package.pkg "https://github.com/NYUAD-IT/NYU-umad/raw/main/umad-2.0-Signed.pkg" && \
-sudo installer -pkg /tmp/package.pkg -target / && rm /tmp/package.pkg
+curl -L -o $u_file "https://github.com/NYUAD-IT/NYU-umad/raw/main/umad-2.0-Signed.pkg" 
+
 }
 
 # if /Users/Shared/umad.pkg not exit then download pkg
-if [ ! -f /Users/Shared/umad.pkg ]; then
+if [ ! -f $u_file ]; then
     downb64
-    else
+else
     echo "Base64 pkg already exists"
 fi
+
+sudo installer -pkg $u_file -target / #&& rm $u_file
+
+#Update LaunchAgent
+sudo curl -L -o $p_file $p_file_url
+#Fix permissions
+sudo chown $(whoami) /Library/LaunchAgents/com.erikng.umad.plist
+sudo chown $(whoami) /Library/LaunchDaemons/com.erikng.umad.check_dep_record.plist
+sudo chown $(whoami) /Library/LaunchDaemons/com.erikng.umad.trigger_nag.plist
+sudo chown $(whoami) /Library/umad
 
 ## get macOS version
 macOS_Version=$(sw_vers -productVersion)
@@ -152,5 +165,20 @@ sudo launchctl bootstrap gui/$(id -u) /Library/LaunchAgents/com.erikng.umad.plis
 
 #Open Profiles Syspref
 #open /System/Library/PreferencePanes/Profiles.prefPane
+
+sleep 30
+
+# Get the currently logged-in user
+loggedInUser=$(stat -f "%Su" /dev/console)
+
+# Get the serial number of the Mac
+serialNumber=$(system_profiler SPHardwareDataType | awk '/Serial Number/ {print $4}')
+
+# Create the CSV file and write the information
+echo "Serial Number,Username" > /Users/Shared/owner.csv
+echo "$serialNumber,$loggedInUser" >> /Users/Shared/owner.csv
+
+# Print a success message
+echo "Owner information captured and saved to /Users/Shared/owner.csv"
 
 exit 0
